@@ -92,12 +92,38 @@ $ sudo apt-get dist-upgrade
 Instructions to install and configure Docker on Raspberry Pi 3 are
 [here](http://blog.alexellis.io/getting-started-with-docker-on-raspberry-pi/).
 
+### Install docker-compose on Raspberyy Pi 3
+
+[Getting docker-compose on Raspberry Pi](https://www.berthon.eu/2017/getting-docker-compose-on-raspberry-pi-arm-the-easy-way/)
+is a step-by-step guide on how to compile `docker-compose` on your Raspberry Pi.
+
+Here is a watered down version of that blogpost.
+
+```bash
+$ git clone https://github.com/docker/compose.git
+$ cd compose
+$ git checkout release
+$ docker build -t docker-compose:armhf -f Dockerfile.armhf .
+## On my Raspberry Pi 3 Model B, it took almost 30 minutes for the docker image to build.
+
+$ docker run --rm --entrypoint="script/build/linux-entrypoint" -v $(pwd)/dist:/code/dist -v $(pwd)/.git:/code/.git "docker-compose:armhf"
+```
+
+Once the above steps are complete, you should have `docker-compose` built in the `dist` directory.
+Copy it to `/usr/local/bin` or use it from the `dist` folder directly.
+
+```bash
+$ ls -l dist/
+total 6816
+-rwxr-xr-x 1 pi pi 6976500 Feb  8 11:41 docker-compose-Linux-armv7l
+```
+
 ### Create Docker Image for Dump1090 Server
 
 ```
 $ git clone https://github.com/IBM/air-traffic-control
 $ cd air-traffic-control/adsb.ground.station
-$ docker build -t dump1090:1.0 .
+$ docker build -t dump1090:1.0 -f Dockerfile.dump1090 .
 ```
 
 Once the Docker image is ready, you can retrieve the `image-id` for `dump1090`, using the following command:
@@ -251,6 +277,27 @@ Raspberry Pi 3 has limited resources and you can avoid creating the Maven reposi
 building this project on a regular laptop/desktop.
 
 ## Steps for building this project
+
+### With Docker
+You can run the `docker` build steps on your laptop and then transfer the desulting image over to the raspberry Pi to run.
+
+```bash
+$ git clone https://github.com/IBM/air-traffic-control
+$ cd air-traffic-control/adsb.ground.station
+$ docker build -t adsb:1.0 -f Dockerfile.adsb .
+```
+
+Once the container is built on your laptop, you have to transfer it to your Raspberry Pi.
+
+With both your laptop and the raspberry Pi on the same network, run the following command on your laptop.
+
+```bash
+$ docker save adsb:1.0 | ssh pi@raspberrypi docker load
+```
+
+The command will take a while to perform the transfer. Once complete, run `docker images` on your Pi to make sure the image was transferred successfully.
+
+### Without Docker
 ```
 $ cd ~
 $ git clone --recursive https://github.com/IBM/air-traffic-control
@@ -265,6 +312,14 @@ The `adsb.ground.station/target` folder will contain the executable jar
 and the device whose details are specified in `src/main/resources/application.properties` file.
 
 ## Running `adsb.ground.station` Client
+
+### Using `docker-compose`
+
+1. Update the image names in the `docker-compose.yml` file.
+2. Run:
+```bash
+docker-compose up -d
+```
 
 ### Co-located with Dump1090 Server on Raspberry Pi 3
 

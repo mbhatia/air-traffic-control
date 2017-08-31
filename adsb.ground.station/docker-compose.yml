@@ -1,0 +1,25 @@
+version: '3'
+
+services:
+  dump1090:
+    image: dump1090:1.0
+    devices:
+      - "/dev/bus/usb:/dev/bus/usb"
+    cap_add:
+      - ALL
+    restart: always
+  adsb:
+    image: adsb:1.0
+    command:
+      - "java"
+      - "-cp"
+      - "."
+      - "-jar"
+      - "adsb.ground.station-develop-SNAPSHOT.jar"
+      - "--host"
+      - "dump1090"
+      - "--port"
+      - "30002"
+    links:
+      - dump1090
+    restart: always

@@ -16,7 +16,7 @@
 #
 # <container_id> is generated when the image is run.
 #
-FROM resin/rpi-raspbian:jessie-20160831 
+FROM resin/rpi-raspbian:stretch-20170830 as build
 
 RUN apt-get update && \  
     apt-get -qy install curl ca-certificates
@@ -41,6 +41,15 @@ RUN git clone https://github.com/MalcolmRobb/dump1090 /tmp/dump1090
 WORKDIR /tmp/dump1090
 RUN make
 
-EXPOSE 30002
-CMD ["./dump1090", "--raw", "--net"]
+RUN cp -p ./view1090 ./dump1090 /usr/local/bin/
 
+FROM resin/rpi-raspbian:stretch-20170830
+
+COPY --from=build /usr/local/ /usr/local/
+COPY --from=build /lib/arm-linux-gnueabihf/ /lib/arm-linux-gnueabihf/
+
+WORKDIR /tmp/dump1090
+ENV LD_LIBRARY_PATH=/usr/local/lib
+
+EXPOSE 30002
+CMD ["/usr/local/bin/dump1090", "--raw", "--net"]

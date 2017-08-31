@@ -1,0 +1,9 @@
+FROM maven:3-jdk-8 as build
+
+FROM resin/artik710-openjdk
+
+WORKDIR /app
+COPY --from=build /usr/src/app/adsb.ground.station/target/adsb.ground.station-develop-SNAPSHOT.jar /app/adsb.ground.station-develop-SNAPSHOT.jar
+
+CMD ["java", "-cp", ".", "-jar", "adsb.ground.station-develop-SNAPSHOT.jar"]
+
